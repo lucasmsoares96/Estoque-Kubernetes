@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  labels:
+    app: frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app: frontend   
+      containers:
+      - name: frontend
+        image: lucasmsoares96/estoque-frontend
+        ports:
+        - containerPort: 80
+        env:
+        - name: BACKEND_IP
+          value: backend-service
+        - name: BACKEND_PORT
+          value: "8080"
+        - name: BACKEND_SECRET
+          valueFrom: 
+            configMapKeyRef:
+              name: frontend-configmap
+              key: secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+spec:
+  selector:
+    app: frontend
+  type: LoadBalancer  
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+      # nodePort: 30000
