@@ -1,0 +1,60 @@
+version: '3.4'
+
+services:
+  webmvc:
+    image: eshop/webmvc
+    environment:
+      - CatalogUrl=http://catalog-api
+      - OrderingUrl=http://ordering-api
+      - BasketUrl=http://basket-api
+    ports:
+      - "5100:80"
+    depends_on:
+      - catalog-api
+      - ordering-api
+      - basket-api
+
+  catalog-api:
+    image: eshop/catalog-api
+    environment:
+      - ConnectionString=Server=sqldata;Initial Catalog=CatalogData;User Id=sa;Password=[PLACEHOLDER]
+    expose:
+      - "80"
+    ports:
+      - "5101:80"
+    #extra hosts can be used for standalone SQL Server or services at the dev PC
+    extra_hosts:
+      - "CESARDLSURFBOOK:10.0.75.1"
+    depends_on:
+      - sqldata
+
+  ordering-api:
+    image: eshop/ordering-api
+    environment:
+      - ConnectionString=Server=sqldata;Database=Services.OrderingDb;User Id=sa;Password=[PLACEHOLDER]
+    ports:
+      - "5102:80"
+    #extra hosts can be used for standalone SQL Server or services at the dev PC
+    extra_hosts:
+      - "CESARDLSURFBOOK:10.0.75.1"
+    depends_on:
+      - sqldata
+
+  basket-api:
+    image: eshop/basket-api
+    environment:
+      - ConnectionString=sqldata
+    ports:
+      - "5103:80"
+    depends_on:
+      - sqldata
+
+  sqldata:
+    environment:
+      - SA_PASSWORD=[PLACEHOLDER]
+      - ACCEPT_EULA=Y
+    ports:
+      - "5434:1433"
+
+  basketdata:
+    image: redis
